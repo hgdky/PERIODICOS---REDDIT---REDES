@@ -60,6 +60,9 @@
                         <a class="nav-link text-white" href="#" id="reports-link">Reportes (Gráficos)</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link text-white" href="#" id="ai-link">Métricas IA</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link text-white" href="#" id="account-link">Cuenta</a>
                     </li>
                     <li class="nav-item mt-5">
@@ -82,7 +85,6 @@
                 
                 <div id="reports-area" class="d-none">
                     <h2 class="mb-4 border-bottom pb-2">Reportes y Estadísticas</h2>
-                    
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <div class="card shadow-sm h-100 border-primary">
@@ -96,7 +98,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="col-md-6">
                             <div class="card shadow-sm h-100">
                                 <div class="card-body text-center">
@@ -109,7 +110,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="row">
                         <div class="col-12">
                             <div class="card shadow-sm">
@@ -118,6 +118,72 @@
                                     <div style="height: 300px;">
                                         <canvas id="sourcesChart"></canvas>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="ai-metrics-area" class="d-none">
+                    <h2 class="mb-4 border-bottom pb-2 text-primary">Evaluación de Modelos IA</h2>
+                    <div class="alert alert-info">
+                        <strong>Modelo Activo:</strong> BERT-Multilingual-Sentiment (v2.4) <br>
+                        <strong>Dataset:</strong> SCRA-News-5k
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card shadow-sm">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Métricas de Clasificación</h5>
+                                    <p class="text-muted">Precision, Recall, F1-Score</p>
+                                    <div style="height: 300px;">
+                                        <canvas id="aiRadarChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card shadow-sm">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Análisis de Sentimiento (Predicción)</h5>
+                                    <p class="text-muted">Distribución Positiva/Negativa/Neutra</p>
+                                    <div style="height: 300px;">
+                                        <canvas id="aiSentimentChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card shadow-sm">
+                                <div class="card-body">
+                                    <h5 class="card-title">Matriz de Confusión (Simulada)</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered text-center">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th></th>
+                                                    <th>Predicción: Positivo</th>
+                                                    <th>Predicción: Negativo</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <th class="table-light">Real: Positivo</th>
+                                                    <td class="bg-success text-white">1250 (TP)</td>
+                                                    <td class="bg-danger text-white">120 (FN)</td>
+                                                </tr>
+                                                <tr>
+                                                    <th class="table-light">Real: Negativo</th>
+                                                    <td class="bg-warning">85 (FP)</td>
+                                                    <td class="bg-success text-white">940 (TN)</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <p class="text-end text-muted small">Accuracy Global: 91.4%</p>
                                 </div>
                             </div>
                         </div>
@@ -135,16 +201,14 @@
                                 <div class="card-body d-flex flex-column">
                                     <h1 class="card-title pricing-card-title text-secondary">$0 <small class="text-muted fw-light">/ mes</small></h1>
                                     <ul class="list-unstyled mt-3 mb-4 text-start">
-                                        <li>✅ Acceso al Feed Principal (5 Fuentes)</li>
-                                        <li>✅ Datos actualizados cada 60 minutos</li>
-                                        <li>❌ Sin acceso a Reportes Analíticos</li>
-                                        <li>❌ Notificaciones por Email</li>
+                                        <li>✅ Acceso al Feed Principal</li>
+                                        <li>✅ Datos cada 60 minutos</li>
+                                        <li>❌ Sin reportes IA</li>
                                     </ul>
                                     <button type="button" class="w-100 btn btn-lg btn-outline-secondary mt-auto" disabled>Plan Actual</button>
                                 </div>
                             </div>
                         </div>
-
                         <div class="col-md-4 mb-4">
                             <div class="card shadow-lg border-warning h-100">
                                 <div class="card-header bg-warning text-white text-center">
@@ -153,16 +217,13 @@
                                 <div class="card-body d-flex flex-column">
                                     <h1 class="card-title pricing-card-title text-warning">$9.99 <small class="text-muted fw-light">/ mes</small></h1>
                                     <ul class="list-unstyled mt-3 mb-4 text-start">
-                                        <li>✅ Todo lo de Estándar</li>
-                                        <li>✅ Datos actualizados cada 15 minutos</li>
-                                        <li>✅ Acceso a Reportes Analíticos</li>
-                                        <li>✅ Filtros Avanzados (Autor, Palabra clave)</li>
+                                        <li>✅ Datos cada 15 minutos</li>
+                                        <li>✅ Métricas de IA Básicas</li>
                                     </ul>
                                     <button type="button" class="w-100 btn btn-lg btn-warning mt-auto">Comprar VIP</button>
                                 </div>
                             </div>
                         </div>
-
                         <div class="col-md-4 mb-4">
                             <div class="card shadow-lg border-info h-100">
                                 <div class="card-header bg-info text-white text-center">
@@ -171,10 +232,9 @@
                                 <div class="card-body d-flex flex-column">
                                     <h1 class="card-title pricing-card-title text-info">$19.99 <small class="text-muted fw-light">/ mes</small></h1>
                                     <ul class="list-unstyled mt-3 mb-4 text-start">
-                                        <li>✅ Todo lo de VIP</li>
-                                        <li>✅ Datos actualizados en 5 minutos</li>
-                                        <li>✅ Exportación de Datos (CSV/JSON)</li>
-                                        <li>✅ Soporte 24/7 y Alertas Personalizadas</li>
+                                        <li>✅ Datos en tiempo real</li>
+                                        <li>✅ Métricas IA Avanzadas</li>
+                                        <li>✅ Exportación CSV</li>
                                     </ul>
                                     <button type="button" class="w-100 btn btn-lg btn-info mt-auto">Comprar Platinum</button>
                                 </div>

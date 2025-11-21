@@ -10,8 +10,8 @@ from datetime import datetime
 import urllib3
 import time
 import random
+from textblob import TextBlob # LIBRERÍA DE NLP
 
-# Desactivar advertencias SSL
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 app = Flask(__name__)
@@ -22,25 +22,19 @@ app.config['SECRET_KEY'] = os.urandom(24)
 
 db = SQLAlchemy(app)
 
-# --- LISTA EXTENDIDA DE TODAS LAS SECCIONES POSIBLES ---
 NEWS_SOURCES = [
-    # RPP
     'https://rpp.pe/', 'https://rpp.pe/politica', 'https://rpp.pe/actualidad', 'https://rpp.pe/peru',
     'https://rpp.pe/lima', 'https://rpp.pe/mundo', 'https://rpp.pe/economia', 'https://rpp.pe/deportes',
     'https://rpp.pe/tecnologia', 'https://rpp.pe/vital', 'https://rpp.pe/entretenimiento', 'https://rpp.pe/cultura',
-    # LA REPUBLICA
     'https://larepublica.pe/', 'https://larepublica.pe/politica', 'https://larepublica.pe/economia',
     'https://larepublica.pe/sociedad', 'https://larepublica.pe/mundo', 'https://larepublica.pe/deportes',
     'https://larepublica.pe/espectaculos', 'https://larepublica.pe/tecnologia', 'https://larepublica.pe/cine-series',
-    # PANAMERICANA
     'https://panamericana.pe/', 'https://panamericana.pe/locales', 'https://panamericana.pe/politica',
     'https://panamericana.pe/nacionales', 'https://panamericana.pe/internacionales',
     'https://panamericana.pe/espectaculos', 'https://panamericana.pe/deportes', 'https://panamericana.pe/salud',
-    # EXITOSA
     'https://www.exitosanoticias.pe/', 'https://www.exitosanoticias.pe/actualidad', 'https://www.exitosanoticias.pe/policiales',
     'https://www.exitosanoticias.pe/politica', 'https://www.exitosanoticias.pe/mundo', 'https://www.exitosanoticias.pe/deportes',
     'https://www.exitosanoticias.pe/espectaculos', 'https://www.exitosanoticias.pe/economia',
-    # ANDINA
     'https://andina.pe/', 'https://andina.pe/agencia/politica', 'https://andina.pe/agencia/economia',
     'https://andina.pe/agencia/actualidad', 'https://andina.pe/agencia/deportes', 'https://andina.pe/agencia/mundo',
     'https://andina.pe/agencia/turismo', 'https://andina.pe/agencia/espectaculos'
@@ -65,7 +59,7 @@ class News(db.Model):
 
 def extract_article_data(session_obj, article_url, source_root):
     try:
-        response = session_obj.get(article_url, timeout=10, verify=False)
+        response = session_obj.get(article_url, timeout=8, verify=False)
         if response.status_code != 200: return None
         soup = BeautifulSoup(response.text, 'html.parser')
         
@@ -102,11 +96,9 @@ def extract_article_data(session_obj, article_url, source_root):
     return None
 
 def run_all_scrapes():
-    print(f"\n>>> INICIANDO BARRIDO TOTAL ({len(NEWS_SOURCES)} SECCIONES): {datetime.now()} <<<")
-    
+    print(f"\n>>> INICIANDO BARRIDO MASIVO: {datetime.now()} <<<")
     s = requests.Session()
     s.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'})
-    
     total_cycle = 0
     
     for source_url in NEWS_SOURCES:
@@ -131,23 +123,18 @@ def run_all_scrapes():
                         else:
                             if "andina.pe" in source_url: href = "https://andina.pe/agencia/" + href
                             else: href = source_url + href
-                    
                     unique_links.add(href)
-                    # LÍMITE AUMENTADO A 500 POR SECCIÓN PARA GARANTIZAR VOLUMEN
-                    if len(unique_links) >= 500: break 
+                    if len(unique_links) >= 200: break 
 
-            print(f"   > Enlaces potenciales: {len(unique_links)}")
+            print(f"   > Enlaces: {len(unique_links)}")
             
             for url in unique_links:
-                # VERIFICACIÓN DE DUPLICADOS ANTES DE ENTRAR (AHORRA TIEMPO)
                 exists = False
                 with app.app_context():
                     if News.query.filter_by(source_url=url).first(): exists = True
-                
-                if exists: continue # Salta si ya la tenemos
+                if exists: continue
 
-                # Pausa humana
-                time.sleep(random.uniform(0.5, 1.5))
+                time.sleep(random.uniform(0.2, 0.8)) 
                 
                 data = extract_article_data(s, url, source_url)
                 if data:
@@ -161,7 +148,7 @@ def run_all_scrapes():
                             print(f"     [+] ({total_cycle}) {data['title'][:30]}...")
         except Exception as e: print(f"   [!] Error: {e}")
 
-    print(f"\n<<< BARRIDO FINALIZADO. TOTAL NUEVOS: {total_cycle} >>>\n")
+    print(f"\n<<< CICLO FINALIZADO. TOTAL: {total_cycle} >>>\n")
 
 @app.route('/')
 def index(): return render_template('index.html')
@@ -190,14 +177,45 @@ def logout():
     session.pop('user_id', None)
     return jsonify({'success': True})
 
+# --- API DE NOTICIAS CON PAGINACIÓN Y NLP REAL ---
 @app.route('/api/news')
 def get_news():
-    news_list = News.query.order_by(News.published_date.desc()).limit(5000).all()
+    page = request.args.get('page', 1, type=int)
+    per_page = 12 # 12 noticias por página
+    
+    # Paginación real de SQLAlchemy
+    pagination = News.query.order_by(News.published_date.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    
+    news_list = pagination.items
     results = []
+    
     for n in news_list:
-        results.append({'title': n.title, 'summary': n.summary, 'author': n.author, 
-                        'date': n.published_date.strftime('%Y-%m-%d'), 'image': n.image_url, 'url': n.source_url})
-    return jsonify(results)
+        # ANÁLISIS DE SENTIMIENTO REAL (NLP)
+        blob = TextBlob(n.title + " " + n.summary)
+        polarity = blob.sentiment.polarity
+        
+        if polarity > 0.1: sentiment = "Positivo"
+        elif polarity < -0.1: sentiment = "Negativo"
+        else: sentiment = "Neutro"
+        
+        results.append({
+            'title': n.title, 
+            'summary': n.summary, 
+            'author': n.author, 
+            'date': n.published_date.strftime('%Y-%m-%d'), 
+            'image': n.image_url, 
+            'url': n.source_url,
+            'sentiment': sentiment # Dato de IA Real
+        })
+        
+    return jsonify({
+        'news': results,
+        'total': pagination.total,
+        'pages': pagination.pages,
+        'current_page': page,
+        'has_next': pagination.has_next,
+        'has_prev': pagination.has_prev
+    })
 
 @app.route('/api/stats')
 def get_stats():
